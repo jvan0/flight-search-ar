@@ -44,6 +44,15 @@ npx skillpm install @jvan0/flight-search-ar
 pip install -r requirements.txt
 ```
 
+### Qué funciona sin navegador (cualquier tercero)
+
+| Fuente | Estado | Cómo |
+|---|---|---|
+| Anduin Promos API | ✅ Funciona standalone (verificada 2026-10-07: 21 promos) | `python3 scripts/search_all.py --from COR --to AEP --date 2026-11-20 --include-promos` |
+| Búsqueda web de promos/noticias | ✅ Con cualquier `web_search` del agente | Ver flujo en `SKILL.md` |
+| Flybondi directo | ⚠️ Best-effort (su API no oficial no resuelve públicamente; la web bloquea bots) | `python3 scripts/search_flybondi.py ...` o manual en https://www.flybondi.com/ |
+| Google Flights vía scripts | ⚠️ Requiere `browser_helpers` | `export BROWSER_HELPERS_PATH=/ruta/a/tus/browser-helpers` (si falta, el script lo avisa por stderr y sigue) |
+
 - Para las búsquedas vía navegador, los scripts esperan helpers
   (`new_tab`, `wait_for_load`, `js`) resolubles vía `BROWSER_HELPERS_PATH`.
   Si tu harness ya provee automatización de navegador (ej. `browser_exec`),

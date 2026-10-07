@@ -11,6 +11,26 @@ import requests
 from datetime import datetime
 
 
+def _browser_available() -> bool:
+    """Check whether the browser_helpers module is importable.
+
+    Standalone installs usually don't have it; the Google Flights
+    functions degrade to an empty result with a warning instead of
+    failing silently.
+    """
+    import os
+
+    helper_path = os.environ.get("BROWSER_HELPERS_PATH", "./browser-helpers")
+    if helper_path not in sys.path:
+        sys.path.insert(0, helper_path)
+    try:
+        import importlib.util
+
+        return importlib.util.find_spec("browser_helpers") is not None
+    except Exception:
+        return False
+
+
 def search_anduin_promos() -> list:
     """Search Anduin Promos API for flight deals."""
     url = "https://anduin.ferminrp.com/api/v1/promos"
@@ -47,6 +67,16 @@ def search_anduin_promos() -> list:
 def search_google_flights_browser(from_airport: str, to_airport: str, date: str) -> list:
     """Search Google Flights using browser automation."""
     import subprocess
+
+    if not _browser_available():
+        print(
+            "Google Flights search skipped: browser automation module "
+            "'browser_helpers' not found. Set BROWSER_HELPERS_PATH to the "
+            "directory that provides it, or rely on --include-promos "
+            "(Anduin API) and the Flybondi script for standalone sources.",
+            file=sys.stderr,
+        )
+        return []
     
     url = f"https://www.google.com/travel/flights?q=Flights+from+{from_airport}+to+{to_airport}+on={date}+one+way&hl=es&curr=ARS"
     
@@ -195,6 +225,13 @@ def search_flybondi_api(from_airport: str, to_airport: str, date: str) -> list:
         return flights
     except Exception as e:
         print(f"Error querying Flybondi: {e}", file=sys.stderr)
+        print(
+            "Hint: api.flybondi.com does not resolve from the public "
+            "internet (verified 2026-10-07) and www.flybondi.com blocks "
+            "bots (Cloudflare). Search manually at "
+            "https://www.flybondi.com/",
+            file=sys.stderr,
+        )
         return []
 
 
@@ -241,7 +278,7 @@ def main():
         promos = search_anduin_promos()
         print(f"  Found {len(promos)} flight promos")
     
-    if not all_flights:
+    if not all_flights and not (args.include_promos and promos):
         print("\nNo flights found.")
         return
     

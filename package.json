@@ -1,6 +1,6 @@
 {
   "name": "@jvan0/flight-search-ar",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Busca vuelos en Argentina comparando Aerolineas Argentinas, Flybondi, JetSMART y LATAM via Google Flights y API Anduin.",
   "license": "MIT",
   "files": [

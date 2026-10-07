@@ -12,9 +12,38 @@ import time
 from datetime import datetime
 
 
+def _browser_available() -> bool:
+    """Check whether the browser_helpers module is importable.
+
+    Standalone installs usually don't have it; this function degrades
+    to an empty result with a warning instead of failing silently.
+    """
+    import os
+
+    helper_path = os.environ.get("BROWSER_HELPERS_PATH", "./browser-helpers")
+    if helper_path not in sys.path:
+        sys.path.insert(0, helper_path)
+    try:
+        import importlib.util
+
+        return importlib.util.find_spec("browser_helpers") is not None
+    except Exception:
+        return False
+
+
 def search_google_flights(from_airport: str, to_airport: str, date: str, return_date: str = None, adults: int = 1) -> list:
     """Search Google Flights and return structured results."""
-    
+
+    if not _browser_available():
+        print(
+            "Google Flights search skipped: browser automation module "
+            "'browser_helpers' not found. Set BROWSER_HELPERS_PATH to the "
+            "directory that provides it, or use the Anduin promos API / "
+            "standard web search instead.",
+            file=sys.stderr,
+        )
+        return []
+
     # Build URL
     base_url = "https://www.google.com/travel/flights"
     query = f"Flights+from+{from_airport}+to+{to_airport}+on={date}"

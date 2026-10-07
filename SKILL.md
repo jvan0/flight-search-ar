@@ -4,12 +4,20 @@ description: "Busca vuelos en Argentina comparando Aerolineas Argentinas, Flybon
 license: MIT
 metadata:
   author: "jvan0"
-  version: "1.0.0"
+  version: "1.0.1"
 ---
 
 # Flight Search Argentina
 
 Busca vuelos en Argentina comparando precios entre múltiples aerolíneas y fuentes.
+
+> **Portabilidad:** los pasos de navegador (`new_tab`, `browser_exec`) requieren
+> un harness con automatización de navegador. Si tu agente no la tiene, igual
+> podés usar la skill: API de Anduin (promos, verificada 2026-10-07) +
+> búsqueda web estándar + `scripts/search_flybondi.py` (best-effort: la API no
+> oficial de Flybondi no resuelve públicamente y su web bloquea bots; ver nota
+> en el script). Los scripts de Google Flights avisan por stderr cuando falta
+> `browser_helpers` en vez de fallar en silencio.
 
 ## Fuentes de datos
 

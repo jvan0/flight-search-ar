@@ -2,6 +2,11 @@
 """
 Search flights on Flybondi directly via their API.
 Flybondi is a low-cost airline in Argentina.
+
+NOTE (verified 2026-10-07): api.flybondi.com does not resolve from the
+public internet and www.flybondi.com blocks automated access (Cloudflare),
+so this script is best-effort. If it returns no flights, search manually
+at https://www.flybondi.com/
 """
 
 import argparse
