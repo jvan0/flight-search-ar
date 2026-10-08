@@ -1,25 +1,25 @@
 ---
-name: flight-search-ar
-description: "Busca vuelos en Argentina comparando Aerolineas Argentinas, Flybondi, JetSMART y LATAM via Google Flights y API Anduin. Usar cuando pidan vuelos, pasajes u ofertas en Argentina."
+name: travel-search-ar
+description: "Busca vuelos y hoteles en Argentina comparando precios entre múltiples fuentes: Google Flights/Hotels, API Anduin, Promociones Aéreas, Despegar, Turismocity y más. Usar cuando pidan vuelos, pasajes, hoteles, alojamiento u ofertas de viaje en Argentina."
 license: MIT
 metadata:
   author: "jvan0"
-  version: "1.0.1"
+  version: "2.0.0"
 ---
 
-# Flight Search Argentina
+# Travel Search Argentina
 
-Busca vuelos en Argentina comparando precios entre múltiples aerolíneas y fuentes.
+Busca vuelos y hoteles en Argentina comparando precios entre múltiples fuentes.
 
 > **Portabilidad:** los pasos de navegador (`new_tab`, `browser_exec`) requieren
 > un harness con automatización de navegador. Si tu agente no la tiene, igual
-> podés usar la skill: API de Anduin (promos, verificada 2026-10-07) +
-> búsqueda web estándar + `scripts/search_flybondi.py` (best-effort: la API no
-> oficial de Flybondi no resuelve públicamente y su web bloquea bots; ver nota
-> en el script). Los scripts de Google Flights avisan por stderr cuando falta
-> `browser_helpers` en vez de fallar en silencio.
+> podés usar la skill: API de Anduin (promos de vuelos y hoteles, verificada
+> 2026-10-07) + búsqueda web estándar (`web_search` + `fetch_content`).
+> Los scripts `.py` son opcionales (extra para Pi, no requeridos).
 
 ## Fuentes de datos
+
+### Vuelos
 
 1. **Google Flights** — vía navegador (cubre Aerolíneas Argentinas, JetSMART, Flybondi, LATAM)
 2. **Anduin Promos API** — promociones de vuelos nacionales e internacionales (https://anduin.ferminrp.com/api/v1/promos)
@@ -27,6 +27,15 @@ Busca vuelos en Argentina comparando precios entre múltiples aerolíneas y fuen
 4. **Noticias** — búsqueda de noticias sobre aerolíneas argentinas
 5. **Despegar / Turismocity** — metabuscadores con ofertas exclusivas
 6. **Comparación de monedas** — ARS vs USD vs EUR para detectar diferencias de precio
+
+### Hoteles
+
+1. **Google Hotels** — vía navegador (https://www.google.com/travel/hotels)
+2. **Anduin Promos API** — categoría `hoteles` (https://anduin.ferminrp.com/api/v1/promos)
+3. **Promociones Aéreas** — sección hoteles (https://promociones-aereas.com.ar)
+4. **Despegar / Turismocity** — metabuscadores con ofertas de hoteles
+5. **Xotelo API** — API gratuita de precios de hoteles (https://xotelo.com/)
+6. **HotelAPI (makcorps)** — API gratuita de precios multi-OTA (https://docs.hotelapi.co/free-hotel-api)
 
 ## Tipos de búsqueda
 
@@ -194,7 +203,7 @@ Comparar los precios y mostrar la opción más barata. A veces el precio en USD 
 | Neuquén | NQN | Presidente Perón |
 | Iguazú | IGR | Cataratas del Iguazú |
 
-## Formato de salida
+## Formato de salida — Vuelos
 
 La skill devuelve una tabla comparativa:
 
@@ -204,6 +213,144 @@ La skill devuelve una tabla comparativa:
 | 22:00 → 23:18 | JetSMART | COR–AEP | 1h 18min | 30.493 ARS | Google Flights |
 | 11:50 → 13:10 | Aerolíneas Argentinas | COR–EZE | 1h 20min | 60.147 ARS | Google Flights |
 ```
+
+## Búsqueda de hoteles
+
+### 1. Google Hotels (vía navegador)
+
+```python
+# Construir URL
+city = "Buenos Aires"
+check_in = "2026-11-10"
+check_out = "2026-11-15"
+
+url = f"https://www.google.com/travel/hotels?q=hotels+in+{city}&hl=es&curr=ARS&checkin={check_in}&checkout={check_out}"
+new_tab(url)
+wait_for_load()
+time.sleep(3)
+
+results = js("""
+(() => {
+  const text = document.body.innerText;
+  return text.substring(0, 10000);
+})()
+""")
+```
+
+### 2. Anduin Promos — Hoteles
+
+```bash
+# Buscar todas las promos de hoteles
+curl -s "https://anduin.ferminrp.com/api/v1/promos" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+promos = data.get('data', {}).get('promos', [])
+hoteles = [p for p in promos if p.get('category') == 'hoteles']
+for p in hoteles:
+    print(f\"{p['title']} | Score: {p.get('score')}\")
+    print(f\"  Link: {p['permalink']}\")
+"
+```
+
+### 3. Promociones Aéreas — Sección Hoteles
+
+```bash
+# Buscar ofertas de hoteles
+web_search("promociones-aereas.com.ar hoteles ofertas 2026")
+```
+
+### 4. Despegar / Turismocity — Hoteles
+
+```python
+# Despegar hoteles
+url = f"https://www.despegar.com.ar/hotels/{city}/{check_in}/{check_out}"
+new_tab(url)
+wait_for_load()
+time.sleep(5)
+
+# Turismocity hoteles
+url = f"https://www.turismocity.com.ar/hotels/{city}/{check_in}/{check_out}"
+new_tab(url)
+wait_for_load()
+time.sleep(5)
+```
+
+### 5. Xotelo API (gratuita)
+
+```bash
+# Precios de hoteles por ciudad
+curl -s "https://xotelo.com/api/search?q=Buenos+Aires&type=hotel" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+for h in data.get('results', [])[:10]:
+    print(f\"{h.get('name')} | {h.get('price')} | {h.get('rating')}\")
+"
+```
+
+### 6. HotelAPI / makcorps (gratuita)
+
+```bash
+# Precios multi-OTA
+curl -s "https://api.makcorps.com/free?city=Buenos+Aires" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+for h in data.get('hotels', [])[:10]:
+    print(f\"{h.get('name')} | {h.get('price')} | {h.get('source')}\")
+"
+```
+
+### Formato de salida — Hoteles
+
+```
+| Hotel | Estrellas | Precio/noche | Fuente |
+|-------|-----------|--------------|--------|
+| Hotel Buenos Aires | 4★ | 45.000 ARS | Google Hotels |
+| Grand Hotel | 3★ | 28.500 ARS | Despegar |
+```
+
+## Sistema de afiliado ético
+
+Esta skill puede incluir códigos de referido en links de Promociones Aéreas.
+**Siempre** se debe mostrar el disclosure al final de cada respuesta.
+
+### Configuración
+
+Editar `affiliate.config.json`:
+
+```json
+{
+  "promociones_aereas": {
+    "affiliate_id": "TU_CODIGO",
+    "disclosure_text": "Puede contener código de referido, esto me ayuda a seguir creando herramientas gratuitas :)",
+    "enabled": true
+  }
+}
+```
+
+### Cómo obtener el código
+
+1. Registrarse en https://promociones-aereas.com.ar/afiliados (gratis)
+2. Completar el formulario
+3. Recibir el código de afiliado
+4. Pegarlo en `affiliate.config.json`
+
+### Aplicación del código
+
+Cuando se entrega un link de Promociones Aéreas, agregar el parámetro de afiliado:
+
+```python
+def apply_affiliate(url, affiliate_id):
+    if "promociones-aereas.com.ar" in url and affiliate_id:
+        separator = "&" if "?" in url else "?"
+        return f"{url}{separator}affiliate={affiliate_id}"
+    return url
+```
+
+### Disclosure obligatorio
+
+Al final de **cada** respuesta que contenga links de Promociones Aéreas:
+
+> Puede contener código de referido, esto me ayuda a seguir creando herramientas gratuitas :)
 
 ## Promociones bancarias y billeteras virtuales
 
@@ -278,10 +425,11 @@ es la fuente principal para vuelos internacionales. Esta skill la integra autom�
 
 ### Diferencias entre las skills
 
-| Aspecto | flight-search-ar | travel-promos-argentina |
+| Aspecto | travel-search-ar | travel-promos-argentina |
 |---------|------------------|------------------------|
 | Vuelos nacionales | ✅ Google Flights + Anduin | ❌ Solo Anduin |
 | Vuelos internacionales | ✅ Anduin + Google Flights | ✅ Anduin |
+| Hoteles | ✅ Google Hotels + Anduin + web | ❌ No |
 | Promociones oficiales | ✅ Redes sociales + web | ❌ Solo Anduin |
 | Noticias | ✅ Búsqueda de noticias | ❌ No |
 | Comparación de monedas | ✅ ARS/USD/EUR | ❌ No |
@@ -289,7 +437,7 @@ es la fuente principal para vuelos internacionales. Esta skill la integra autom�
 
 ### Cuándo usar cada skill
 
-- **flight-search-ar:** Cuando el usuario quiere comparar precios entre aerolíneas y fuentes
+- **travel-search-ar:** Cuando el usuario quiere comparar precios de vuelos y hoteles entre fuentes
 - **travel-promos-argentina:** Cuando el usuario quiere ver promos internacionales específicamente
 
 ## Notas
@@ -332,3 +480,13 @@ Usuario: "Buscá vuelos de Córdoba a Brasil"
 3. Buscar promociones oficiales en redes sociales de aerolíneas
 4. Buscar noticias sobre ofertas y promociones
 5. Mostrar tabla con promos y precios comparados
+
+### Hoteles
+Usuario: "Buscá hoteles en Buenos Aires del 10 al 15 de noviembre"
+
+1. Buscar en Google Hotels: Buenos Aires, 2026-11-10 a 2026-11-15
+2. Buscar en Anduin Promos API (filtrar por category == "hoteles")
+3. Buscar en Promociones Aéreas sección hoteles
+4. Buscar en Despegar y Turismocity
+5. Buscar en Xotelo API y HotelAPI (precios multi-OTA)
+6. Comparar precios y mostrar tabla con opciones + promociones bancarias aplicables

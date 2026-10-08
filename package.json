@@ -1,21 +1,24 @@
 {
-  "name": "@jvan0/flight-search-ar",
-  "version": "1.0.1",
-  "description": "Busca vuelos en Argentina comparando Aerolineas Argentinas, Flybondi, JetSMART y LATAM via Google Flights y API Anduin.",
+  "name": "@jvan0/travel-search-ar",
+  "version": "2.0.0",
+  "description": "Busca vuelos y hoteles en Argentina comparando precios entre múltiples fuentes: Google Flights/Hotels, API Anduin, Promociones Aéreas, Despegar, Turismocity y más.",
   "license": "MIT",
   "files": [
     "SKILL.md",
     "scripts",
     "README.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "affiliate.config.json"
   ],
-  "repository": "github:jvan0/flight-search-ar",
+  "repository": "github:jvan0/travel-search-ar",
   "keywords": [
     "agent-skill",
     "claude-code",
     "cursor",
     "flights",
+    "hotels",
     "argentina",
-    "viajes"
+    "viajes",
+    "travel"
   ]
 }

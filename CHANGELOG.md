@@ -3,6 +3,22 @@
 Todos los cambios notables de este proyecto se documentan acá, siguiendo
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 
+## [2.0.0] - 2026-10-08
+
+### Agregado
+
+- Renombrado de `flight-search-ar` a `travel-search-ar`.
+- Sección de hoteles: Google Hotels, Anduin API (categoría `hoteles`),
+  Promociones Aéreas, Despegar/Turismocity, Xotelo API, HotelAPI.
+- Sistema de afiliado ético con disclosure transparente.
+- `affiliate.config.json` para configurar código de afiliado de Promociones Aéreas.
+- README multi-plataforma: Pi, ChatGPT, Claude.
+
+### Cambiado
+
+- Scripts `.py` marcados como opcionales (extra para Pi, no requeridos).
+- Skill basada en APIs + `web_search` + `fetch_content` para portabilidad.
+
 ## [1.0.1] - 2026-10-07
 
 ### Corregido

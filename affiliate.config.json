@@ -1,0 +1,8 @@
+{
+  "promociones_aereas": {
+    "affiliate_id": "PONER_TU_CODIGO_AQUI",
+    "disclosure_text": "Puede contener código de referido, esto me ayuda a seguir creando herramientas gratuitas :)",
+    "enabled": false
+  },
+  "_comment": "Para activar: 1) Registrate en https://promociones-aereas.com.ar/afiliados 2) Reemplazar PONER_TU_CODIGO_AQUI con tu código 3) Cambiar enabled a true"
+}
